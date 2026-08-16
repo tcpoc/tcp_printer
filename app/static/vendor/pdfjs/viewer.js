@@ -11,7 +11,8 @@ const error = document.getElementById("error");
 const pageNumber = document.getElementById("page-number");
 const pageCount = document.getElementById("page-count");
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = "./build/pdf.worker.mjs";
+const assetBase = new URL("./", window.location.href);
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL("build/pdf.worker.mjs", assetBase).href;
 
 const eventBus = new EventBus();
 const linkService = new PDFLinkService({ eventBus });
@@ -45,9 +46,9 @@ if (!file) {
   const task = pdfjsLib.getDocument({
     url: file,
     withCredentials: true,
-    cMapUrl: "./cmaps/",
+    cMapUrl: new URL("cmaps/", assetBase).href,
     cMapPacked: true,
-    standardFontDataUrl: "./standard_fonts/",
+    standardFontDataUrl: new URL("standard_fonts/", assetBase).href,
     isEvalSupported: false,
   });
   task.promise.then((document) => {
