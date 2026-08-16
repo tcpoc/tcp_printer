@@ -1,9 +1,9 @@
 .venv/
 __pycache__/
 *.pyc
+.env
+*.log
 data/*
 !data/.gitkeep
 storage/*
 !storage/.gitkeep
-.env
-*.log
