@@ -218,9 +218,12 @@ async def preview(job_id: str, request: Request):
     job = job_for_session(job_id, request)
     if not job.get("pdf_path") or not Path(job["pdf_path"]).exists():
         raise HTTPException(status_code=404, detail="预览文件不存在。")
-    # Supplying a filename makes Starlette send Content-Disposition: attachment,
-    # which prevents several mobile browsers from rendering the PDF inline.
-    return FileResponse(job["pdf_path"], media_type="application/pdf")
+    # 明确要求浏览器内嵌预览；微信等内置 WebView 仍可能强制交给系统浏览器处理。
+    return FileResponse(
+        job["pdf_path"],
+        media_type="application/pdf",
+        headers={"Content-Disposition": "inline"},
+    )
 
 
 @app.post("/api/jobs/{job_id}/submit")
