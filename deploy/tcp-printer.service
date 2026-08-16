@@ -1,0 +1,23 @@
+[Unit]
+Description=TCP Printer self-service web app
+After=network-online.target cups.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=printsvc
+Group=printsvc
+WorkingDirectory=/opt/tcp_printer
+EnvironmentFile=/opt/tcp_printer/.env
+ExecStart=/opt/tcp_printer/.venv/bin/python run.py
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+ReadWritePaths=/opt/tcp_printer/data /opt/tcp_printer/storage
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

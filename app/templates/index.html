@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>自助打印</title>
+  <link rel="stylesheet" href="/static/styles.css?v=6">
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="/" aria-label="TCP 战队自助打印，返回上传文件">
+      <img class="brand-logo" src="/static/brand/tcp-logo.jpg" alt="TCP 战队">
+    </a>
+    <div class="printer-status" id="printer-status" aria-live="polite">
+      <span class="status-dot"></span>
+      <span id="printer-status-label">打印机在线</span>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="screen active" id="screen-upload" aria-labelledby="upload-title">
+      <div class="upload-layout">
+        <div>
+          <h1 id="upload-title">上传要打印的文件</h1>
+          <p class="muted">支持 PDF、Word、Excel、PPT、JPG、PNG。</p>
+        </div>
+        <label class="drop-zone" id="drop-zone" for="file-input">
+          <span class="drop-zone-title">选择文件</span>
+          <span class="muted">也可以把文件拖到这里</span>
+          <input id="file-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png">
+        </label>
+        <div class="selected-file hidden" id="selected-file">
+          <div>
+            <strong id="selected-file-name"></strong>
+            <span class="muted" id="selected-file-size"></span>
+          </div>
+          <button class="icon-button" id="remove-file" aria-label="删除文件" title="删除文件">x</button>
+        </div>
+        <button class="primary-button hidden" id="start-upload">继续</button>
+        <div class="upload-progress hidden" id="upload-progress"><span></span></div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-processing" aria-live="polite">
+      <div class="state-panel">
+        <h1 id="processing-title">正在处理文件</h1>
+        <p class="muted" id="processing-message">正在检查文件</p>
+        <ol class="steps">
+          <li class="current">正在检查文件</li>
+          <li>正在转换为 PDF</li>
+          <li>正在生成预览</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-settings" aria-labelledby="settings-title">
+      <div class="settings-layout">
+        <section class="preview-column">
+          <div class="section-heading">
+            <div>
+              <h1 id="settings-title">文档预览</h1>
+              <p class="muted" id="file-summary"></p>
+            </div>
+          </div>
+          <iframe id="pdf-preview" title="PDF 预览"></iframe>
+          <p class="preview-hint" id="page-indicator"></p>
+        </section>
+
+        <aside class="settings-panel">
+          <div class="settings-scroll">
+            <h2>打印设置</h2>
+            <fieldset>
+              <legend>颜色模式</legend>
+              <div class="segmented-control" id="color-mode">
+                <button class="selected" data-value="monochrome">黑白</button>
+                <button data-value="color">彩色</button>
+              </div>
+            </fieldset>
+            <div class="form-row">
+              <label for="copies">打印份数</label>
+              <div class="stepper">
+                <button id="copies-minus" aria-label="减少份数" title="减少份数">-</button>
+                <input id="copies" type="number" min="1" max="99" value="1">
+                <button id="copies-plus" aria-label="增加份数" title="增加份数">+</button>
+              </div>
+            </div>
+            <fieldset>
+              <legend>页码范围</legend>
+              <div class="segmented-control" id="range-mode">
+                <button class="selected" data-value="all">全部页面</button>
+                <button data-value="custom">自定义页码</button>
+              </div>
+              <label class="hidden" id="custom-range-wrap" for="page-range">
+                <span class="sr-only">自定义页码</span>
+                <input id="page-range" placeholder="例如 1-3, 5, 8-10">
+                <small class="error-text hidden" id="range-error"></small>
+              </label>
+            </fieldset>
+            <div class="read-only-row"><span>纸张</span><strong>A4</strong></div>
+            <div class="read-only-row"><span>打印方式</span><strong>单面打印</strong></div>
+            <div class="job-summary">
+              <span>预计打印</span>
+              <strong id="estimate">1 张黑白 A4</strong>
+            </div>
+          </div>
+          <button class="primary-button" id="submit-job">确认并加入打印队列</button>
+        </aside>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-job" aria-live="polite">
+      <div class="job-layout">
+        <section>
+          <h1 id="job-title">任务已加入打印队列</h1>
+          <p class="muted" id="job-message"></p>
+          <div class="job-card" id="job-card"></div>
+          <ol class="timeline" id="timeline"></ol>
+          <div class="job-actions" id="job-actions"></div>
+        </section>
+        <aside class="session-tasks">
+          <h2>本次会话任务</h2>
+          <div id="session-job-list"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-result" aria-live="polite">
+      <div class="state-panel">
+        <h1 id="result-title"></h1>
+        <p class="muted" id="result-message"></p>
+        <div class="result-actions" id="result-actions"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="confirm-modal hidden" id="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-message">
+    <div class="dialog-content">
+      <h2 id="dialog-title"></h2>
+      <p id="dialog-message"></p>
+      <div class="dialog-actions">
+        <button class="secondary-button" id="dialog-cancel" type="button">返回</button>
+        <button class="danger-button" id="dialog-confirm-cancel" type="button">确认取消</button>
+        <button class="danger-button hidden" id="dialog-confirm-stop" type="button">确认停止</button>
+      </div>
+    </div>
+  </div>
+  <script src="/static/app.js?v=5"></script>
+</body>
+</html>
