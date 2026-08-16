@@ -48,7 +48,6 @@ if (!file) {
     cMapUrl: "./cmaps/",
     cMapPacked: true,
     standardFontDataUrl: "./standard_fonts/",
-    wasmUrl: "./image_decoders/",
     isEvalSupported: false,
   });
   task.promise.then((document) => {

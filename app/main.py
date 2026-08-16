@@ -1,3 +1,4 @@
+import mimetypes
 import secrets
 import shutil
 from contextlib import asynccontextmanager
@@ -29,6 +30,10 @@ async def lifespan(_: FastAPI):
     yield
     worker.stop()
 
+
+# Windows and some Linux installations do not register .mjs by default.
+# PDF.js is loaded as an ES module and browsers reject text/plain responses.
+mimetypes.add_type("application/javascript", ".mjs")
 
 app = FastAPI(title="TCP Printer", lifespan=lifespan)
 templates = Jinja2Templates(directory=str(PROJECT_ROOT / "app" / "templates"))
