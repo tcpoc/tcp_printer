@@ -1,0 +1,17 @@
+@import url("web/pdf_viewer.css");
+
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0; overflow: hidden; color: #1f2d2a; font-family: Arial, sans-serif; }
+.toolbar { display: flex; align-items: center; gap: 6px; height: 44px; padding: 6px 8px; border-bottom: 1px solid #d5ddda; background: #f8faf9; }
+.toolbar button { min-width: 32px; height: 30px; border: 1px solid #c8d2cf; border-radius: 4px; background: #fff; color: #24312e; font-size: 16px; cursor: pointer; }
+.toolbar button:active { background: #e6f1ee; }
+.toolbar-spacer { flex: 1; }
+.page-control { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; white-space: nowrap; }
+#page-number { width: 44px; height: 30px; border: 1px solid #c8d2cf; border-radius: 4px; text-align: center; }
+#viewer-container { position: absolute; inset: 44px 0 0; overflow: auto; background: #eef2f1; }
+#viewer { padding: 16px 0; }
+.pdfViewer .page { margin: 0 auto 16px; border: 0; box-shadow: 0 1px 4px rgb(24 39 36 / 18%); }
+#loading, #error { position: absolute; inset: 35% 16px auto; margin: 0; color: #586764; text-align: center; }
+#error { color: #a32121; }
+@media (max-width: 480px) { .toolbar { gap: 4px; } .toolbar button { min-width: 30px; } #viewer { padding: 10px 0; } .pdfViewer .page { margin-bottom: 10px; } }

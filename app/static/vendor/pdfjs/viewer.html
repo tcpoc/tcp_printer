@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF 预览</title>
+  <link rel="stylesheet" href="viewer.css">
+</head>
+<body>
+  <header class="toolbar">
+    <button id="previous" type="button" title="上一页" aria-label="上一页">‹</button>
+    <span class="page-control"><input id="page-number" type="number" min="1" value="1" aria-label="页码"><span id="page-count">/ -</span></span>
+    <button id="next" type="button" title="下一页" aria-label="下一页">›</button>
+    <span class="toolbar-spacer"></span>
+    <button id="zoom-out" type="button" title="缩小" aria-label="缩小">−</button>
+    <button id="zoom-reset" type="button" title="适合宽度" aria-label="适合宽度">适合</button>
+    <button id="zoom-in" type="button" title="放大" aria-label="放大">＋</button>
+  </header>
+  <main id="viewer-container" tabindex="0">
+    <div id="viewer" class="pdfViewer"></div>
+    <p id="loading">正在加载预览…</p>
+    <p id="error" hidden>无法渲染此 PDF。请返回后重新上传文件。</p>
+  </main>
+  <script type="module" src="viewer.js"></script>
+</body>
+</html>
