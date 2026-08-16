@@ -63,7 +63,14 @@
               <p class="muted" id="file-summary"></p>
             </div>
           </div>
-          <iframe id="pdf-preview" title="PDF 预览"></iframe>
+          <div id="pdf-preview" class="pdf-preview" aria-label="PDF 预览" aria-live="polite">
+            <p class="pdf-preview-state" id="pdf-preview-state">正在加载预览…</p>
+            <div class="pdf-pages" id="pdf-pages"></div>
+            <p class="pdf-preview-error hidden" id="pdf-preview-error">
+              当前浏览器无法渲染预览，请
+              <a id="pdf-open-link" target="_blank" rel="noopener">在浏览器中打开</a>。
+            </p>
+          </div>
           <p class="preview-hint" id="page-indicator"></p>
         </section>
 
@@ -145,6 +152,6 @@
       </div>
     </div>
   </div>
-  <script src="/static/app.js?v=5"></script>
+  <script src="/static/app.js?v=6"></script>
 </body>
 </html>

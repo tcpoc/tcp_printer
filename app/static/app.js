@@ -10,6 +10,7 @@ let selectedFile = null;
 let colorMode = "monochrome";
 let rangeMode = "all";
 let pollTimer = null;
+let previewToken = 0;
 
 const byId = (id) => document.getElementById(id);
 const screens = ["upload", "processing", "settings", "job", "result"];
@@ -86,7 +87,7 @@ function updateEstimate() {
 function renderSettings(job) {
   currentJob = job;
   byId("file-summary").textContent = `${job.file_name} · 已转换为 PDF · 共 ${job.pages} 页`;
-  byId("pdf-preview").src = job.preview_url;
+  renderPdfPreview(job.preview_url);
   byId("page-indicator").textContent = `共 ${job.pages} 页，可在预览中滚动查看`;
   byId("page-range").value = "";
   byId("copies").value = "1";
@@ -97,6 +98,51 @@ function renderSettings(job) {
   byId("custom-range-wrap").classList.add("hidden");
   updateEstimate();
   showScreen("settings");
+}
+
+async function renderPdfPreview(url) {
+  const token = ++previewToken;
+  const pages = byId("pdf-pages");
+  const state = byId("pdf-preview-state");
+  const error = byId("pdf-preview-error");
+  const link = byId("pdf-open-link");
+  pages.replaceChildren();
+  state.classList.remove("hidden");
+  state.textContent = "正在加载预览…";
+  error.classList.add("hidden");
+  link.href = url;
+  try {
+    const pdfjs = await import("/static/vendor/pdfjs/pdf.min.mjs");
+    if (token !== previewToken) return;
+    pdfjs.GlobalWorkerOptions.workerSrc = "/static/vendor/pdfjs/pdf.worker.min.mjs";
+    const pdf = await pdfjs.getDocument({ url, withCredentials: true }).promise;
+    if (token !== previewToken) return;
+    state.classList.add("hidden");
+    const width = Math.max(280, pages.clientWidth - 32);
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      const page = await pdf.getPage(pageNumber);
+      const baseViewport = page.getViewport({ scale: 1 });
+      const scale = Math.min(1.6, width / baseViewport.width);
+      const viewport = page.getViewport({ scale });
+      const wrapper = document.createElement("figure");
+      wrapper.className = "pdf-page";
+      wrapper.dataset.page = pageNumber;
+      const canvas = document.createElement("canvas");
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.ceil(viewport.width * ratio);
+      canvas.height = Math.ceil(viewport.height * ratio);
+      canvas.style.aspectRatio = `${viewport.width} / ${viewport.height}`;
+      wrapper.append(canvas);
+      pages.append(wrapper);
+      await page.render({ canvasContext: canvas.getContext("2d"), viewport, transform: ratio !== 1 ? [ratio, 0, 0, ratio, 0, 0] : null }).promise;
+      if (token !== previewToken) return;
+    }
+  } catch (loadError) {
+    if (token !== previewToken) return;
+    state.classList.add("hidden");
+    error.classList.remove("hidden");
+    console.error("PDF preview failed", loadError);
+  }
 }
 
 function formatState(state) {
