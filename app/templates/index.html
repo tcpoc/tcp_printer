@@ -27,7 +27,8 @@
         <label class="drop-zone" id="drop-zone" for="file-input">
           <span class="drop-zone-title">选择文件</span>
           <span class="muted">也可以把文件拖到这里</span>
-          <input id="file-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png">
+          <!-- 使用通用文件入口，避免手机浏览器因包含图片类型而优先打开照片选择器；后端仍会校验扩展名和文件内容。 -->
+          <input id="file-input" type="file" accept="*/*">
         </label>
         <div class="selected-file hidden" id="selected-file">
           <div>
