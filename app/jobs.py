@@ -331,7 +331,7 @@ class PrintBackend:
             return {"state": "online", "label": "打印机在线"}
         try:
             result = subprocess.run(
-                ["lpstat", "-p", self.settings.queue_name], capture_output=True, text=True, timeout=8, check=False,
+                ["lpstat", "-l", "-p", self.settings.queue_name], capture_output=True, text=True, timeout=8, check=False,
                 env=self._cups_env(),
             )
         except (FileNotFoundError, subprocess.TimeoutExpired):
@@ -341,9 +341,11 @@ class PrintBackend:
             return {"state": "offline", "label": "未找到打印机队列"}
         if "disabled" in output:
             return {"state": "offline", "label": "打印机已暂停或发生故障"}
-        if "media-empty" in output or "out of paper" in output:
+        if any(term in output for term in ("media-empty", "media-needed", "out of paper", "paper empty", "paper out", "缺纸")):
             return {"state": "attention", "label": "打印机缺纸"}
-        if "toner-empty" in output:
+        if any(term in output for term in ("paper jam", "jammed", "卡纸")):
+            return {"state": "attention", "label": "打印机卡纸"}
+        if any(term in output for term in ("toner-empty", "toner low", "toner-low", "碳粉")):
             return {"state": "attention", "label": "碳粉不足"}
         return {"state": "online", "label": "打印机在线"}
 
