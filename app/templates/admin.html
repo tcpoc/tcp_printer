@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>打印服务管理</title>
+  <link rel="stylesheet" href="/static/styles.css?v=6">
+  <link rel="stylesheet" href="/static/admin.css?v=1">
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="/" aria-label="返回自助打印">
+      <img class="brand-logo" src="/static/brand/tcp-logo.jpg" alt="TCP 战队">
+    </a>
+    <strong>打印服务管理</strong>
+  </header>
+  <main class="admin-shell">
+    <section class="admin-auth" id="auth-panel">
+      <label for="admin-token">管理员令牌</label>
+      <div class="admin-auth-row">
+        <input id="admin-token" type="password" autocomplete="off" placeholder="输入 .env 中的 TCP_PRINTER_ADMIN_TOKEN">
+        <button class="primary-button" id="save-token" type="button">进入管理</button>
+      </div>
+      <p class="muted" id="auth-error"></p>
+    </section>
+    <section class="admin-dashboard hidden" id="dashboard">
+      <div class="admin-toolbar">
+        <div><h1>运行状态</h1><p class="muted" id="last-updated"></p></div>
+        <div class="admin-toolbar-actions">
+          <button class="secondary-button" id="refresh-status" type="button">刷新</button>
+          <button class="danger-button" id="run-cleanup" type="button">立即清理</button>
+        </div>
+      </div>
+      <div class="admin-metrics" id="metrics"></div>
+      <div class="admin-table-wrap">
+        <table>
+          <thead><tr><th>任务</th><th>文件</th><th>状态</th><th>提交时间</th><th>操作</th></tr></thead>
+          <tbody id="job-table"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script src="/static/admin.js?v=2"></script>
+</body>
+</html>
