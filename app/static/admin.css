@@ -7,7 +7,7 @@
 .admin-dashboard { overflow: hidden; }
 .admin-toolbar { justify-content: space-between; margin-bottom: 24px; }
 .admin-toolbar h1 { margin-bottom: 4px; }
-.admin-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+.admin-metrics { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 24px; }
 .metric { padding: 16px; background: var(--surface-muted); border-radius: 6px; }
 .metric strong, .metric span { display: block; }
 .metric strong { margin-top: 6px; font-size: 20px; }
@@ -18,6 +18,9 @@ th { color: var(--muted); font-size: 13px; font-weight: 700; }
 td .muted { font-size: 13px; }
 .table-action { padding: 7px 10px; border: 1px solid var(--danger); border-radius: 5px; color: var(--danger); background: var(--surface); }
 .table-action:hover { color: #fff; background: var(--danger); }
+.admin-notice { margin: 0 0 20px; color: var(--muted); }
+.admin-section { margin-top: 24px; }
+.admin-section h2 { margin-bottom: 12px; }
 @media (max-width: 640px) {
   .admin-shell { width: min(100% - 20px, 1180px); margin: 16px auto; }
   .admin-auth { margin: 32px auto; }
@@ -25,5 +28,5 @@ td .muted { font-size: 13px; }
   .admin-auth-row button, .admin-auth input { width: 100%; }
   .admin-toolbar-actions { width: 100%; }
   .admin-toolbar-actions button { flex: 1; }
-  .admin-metrics { grid-template-columns: 1fr; }
+  .admin-metrics { grid-template-columns: repeat(2, 1fr); }
 }

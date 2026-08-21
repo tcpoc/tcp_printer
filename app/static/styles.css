@@ -43,7 +43,7 @@ h2 { font-size: 18px; }
 .selected-file, .job-card { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
 .selected-file strong { display: block; overflow-wrap: anywhere; }
 .selected-file .muted { display: block; margin-top: 4px; }
-.upload-layout > .primary-button { margin-top: 16px; }
+.upload-layout > .primary-button { display: block; width: 100%; margin-top: 16px; }
 .icon-button { width: 40px; height: 40px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
 .upload-progress { height: 8px; margin-top: 16px; overflow: hidden; background: var(--surface-muted); border-radius: 4px; }
 .upload-progress span { display: block; width: 70%; height: 100%; background: var(--primary); }

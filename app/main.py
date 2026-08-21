@@ -89,6 +89,13 @@ def public_job(job: dict) -> dict:
     }
 
 
+def admin_job(job: dict) -> dict:
+    payload = public_job(job)
+    payload["printer_job_id"] = job.get("cups_job_id")
+    payload["session_id"] = job["session_id"]
+    return payload
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     response = templates.TemplateResponse("index.html", {"request": request, "mode": settings.mode})
@@ -125,13 +132,30 @@ async def printer_status():
 async def admin_status(request: Request):
     require_admin(request)
     usage = shutil.disk_usage(settings.storage_dir)
+    printer_details = backend.diagnostics()
     return {
-        "printer": backend.status(),
+        "printer": printer_details["status"],
+        "printer_details": printer_details,
         "mode": settings.mode,
+        "queue": {"paused": store.queue_paused(), **store.queue_counts()},
         "retention_hours": settings.retention_hours,
         "storage": {"used": usage.used, "free": usage.free, "total": usage.total},
-        "jobs": [public_job(job) for job in store.list_recent()],
+        "jobs": [admin_job(job) for job in store.list_recent()],
     }
+
+
+@app.post("/api/admin/queue/pause")
+async def admin_pause_queue(request: Request):
+    require_admin(request)
+    store.set_queue_paused(True)
+    return {"paused": True}
+
+
+@app.post("/api/admin/queue/resume")
+async def admin_resume_queue(request: Request):
+    require_admin(request)
+    store.set_queue_paused(False)
+    return {"paused": False}
 
 
 @app.post("/api/admin/cleanup")
@@ -159,6 +183,18 @@ async def admin_stop(job_id: str, request: Request):
         raise HTTPException(status_code=409, detail="任务当前没有在打印。")
     backend.cancel(job.get("cups_job_id"))
     return public_job(store.update(job_id, state="stopped", message="管理员已停止后续打印"))
+
+
+@app.post("/api/admin/printer/jobs/{printer_job_id}/cancel")
+async def admin_cancel_printer_job(printer_job_id: str, request: Request):
+    require_admin(request)
+    if settings.mode != "windows":
+        raise HTTPException(status_code=409, detail="当前打印模式不支持直接管理 Windows 打印作业。")
+    try:
+        backend.cancel(printer_job_id)
+    except JobError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    return {"cancelled": printer_job_id}
 
 
 @app.post("/api/uploads")

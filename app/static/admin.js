@@ -37,17 +37,36 @@ function metric(label, value) {
 }
 
 function renderStatus(payload) {
-  const metrics = document.getElementById("metrics");
+    const metrics = document.getElementById("metrics");
+  const queue = payload.queue || {};
   metrics.replaceChildren(
     metric("打印机", payload.printer.label),
     metric("运行模式", payload.mode),
+    metric("队列", queue.paused ? "已暂停" : "运行中"),
+    metric("等待任务", queue.pending || 0),
+    metric("打印中", queue.printing || 0),
     metric("可用磁盘", formatBytes(payload.storage.free)),
   );
+  document.getElementById("pause-queue").disabled = Boolean(queue.paused);
+  document.getElementById("resume-queue").disabled = !queue.paused;
+  const detail = payload.printer_details || {};
+  document.getElementById("printer-detail").textContent = detail.error
+    ? detail.error
+    : `打印机队列：${detail.queue_name || "未配置"} · 原始状态：${detail.raw_status ?? "不适用"}`;
+  const printerTable = document.getElementById("printer-job-table");
+  printerTable.replaceChildren();
+  (detail.jobs || []).forEach((job) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td>${escapeHtml(job.id)}</td><td>${escapeHtml(job.document)}</td><td>${escapeHtml(job.user)}</td><td>${escapeHtml(job.status)}</td><td>${escapeHtml(`${job.pages_printed}/${job.total_pages}`)}</td><td></td>`;
+    row.lastElementChild.append(action("取消", () => cancelPrinterJob(job.id)));
+    printerTable.append(row);
+  });
+  if (!detail.jobs?.length) printerTable.innerHTML = '<tr><td colspan="6" class="muted">当前没有 Windows 打印作业</td></tr>';
   const table = document.getElementById("job-table");
   table.replaceChildren();
   payload.jobs.forEach((job) => {
     const row = document.createElement("tr");
-    row.innerHTML = `<td>${escapeHtml(job.public_id)}</td><td>${escapeHtml(job.file_name)}</td><td>${formatState(job.state)}</td><td>${new Date(job.created_at).toLocaleString()}</td><td></td>`;
+    row.innerHTML = `<td>${escapeHtml(job.public_id)}</td><td>${escapeHtml(job.file_name)}</td><td>${formatState(job.state)}<div class="muted">${escapeHtml(job.message || "")}</div></td><td>${escapeHtml(job.printer_job_id || "-")}</td><td>${new Date(job.created_at).toLocaleString()}</td><td></td>`;
     const actionCell = row.lastElementChild;
     if (["pending", "ready", "converting"].includes(job.state)) {
       actionCell.append(action("取消", () => changeJob(job.id, "cancel")));
@@ -78,6 +97,16 @@ async function changeJob(id, operation) {
   catch (error) { authError.textContent = error.message; }
 }
 
+async function cancelPrinterJob(id) {
+  try { await request(`/api/admin/printer/jobs/${encodeURIComponent(id)}/cancel`, { method: "POST" }); await refresh(); }
+  catch (error) { authError.textContent = error.message; }
+}
+
+async function setQueuePaused(paused) {
+  try { await request(`/api/admin/queue/${paused ? "pause" : "resume"}`, { method: "POST" }); await refresh(); }
+  catch (error) { authError.textContent = error.message; }
+}
+
 async function enter() {
   adminToken = tokenInput.value.trim();
   if (!adminToken) { authError.textContent = "请输入管理员令牌。"; return; }
@@ -95,6 +124,8 @@ async function enter() {
 
 document.getElementById("save-token").addEventListener("click", enter);
 document.getElementById("refresh-status").addEventListener("click", refresh);
+document.getElementById("pause-queue").addEventListener("click", () => setQueuePaused(true));
+document.getElementById("resume-queue").addEventListener("click", () => setQueuePaused(false));
 document.getElementById("run-cleanup").addEventListener("click", async () => {
   try { await request("/api/admin/cleanup", { method: "POST" }); await refresh(); }
   catch (error) { authError.textContent = error.message; }

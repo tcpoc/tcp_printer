@@ -7,3 +7,4 @@ data/*
 !data/.gitkeep
 storage/*
 !storage/.gitkeep
+fonts/

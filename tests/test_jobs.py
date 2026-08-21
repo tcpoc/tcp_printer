@@ -1,10 +1,13 @@
 import os
 import tempfile
 import unittest
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from unittest.mock import patch
 
-from app.jobs import JobError, JobStore, parse_page_range, validate_source_file
+from app.config import get_settings
+from app.jobs import FileConverter, JobError, JobStore, PrintBackend, parse_page_range, validate_source_file
 
 
 class PageRangeTests(unittest.TestCase):
@@ -35,6 +38,14 @@ class FileValidationTests(unittest.TestCase):
 
 
 class QueueTests(unittest.TestCase):
+    def test_queue_pause_state_is_persistent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = JobStore(Path(directory) / "printer.db")
+            self.assertFalse(store.queue_paused())
+            store.set_queue_paused(True)
+            self.assertTrue(store.queue_paused())
+            self.assertEqual(store.queue_counts(), {"ready": 0, "pending": 0, "printing": 0})
+
     def test_claiming_a_job_changes_it_to_printing_once(self):
         with tempfile.TemporaryDirectory() as directory:
             store = JobStore(Path(directory) / "printer.db")
@@ -75,6 +86,42 @@ class QueueTests(unittest.TestCase):
             self.assertFalse(old_file.exists())
             self.assertTrue(active_file.exists())
             self.assertFalse(orphan_file.exists())
+
+
+class ConverterSelectionTests(unittest.TestCase):
+    def setUp(self):
+        self.settings = replace(get_settings(), office_converter="auto")
+        self.converter = FileConverter(self.settings)
+
+    @patch("app.jobs.platform.system", return_value="Windows")
+    def test_auto_uses_word_for_docx_on_windows(self, _system):
+        self.assertEqual(self.converter._office_converter_for(Path("report.docx")), "word")
+
+    @patch("app.jobs.platform.system", return_value="Windows")
+    def test_auto_keeps_libreoffice_for_excel_on_windows(self, _system):
+        self.assertEqual(self.converter._office_converter_for(Path("report.xlsx")), "libreoffice")
+
+    @patch("app.jobs.platform.system", return_value="Linux")
+    def test_auto_uses_libreoffice_on_ubuntu(self, _system):
+        self.assertEqual(self.converter._office_converter_for(Path("report.doc")), "libreoffice")
+
+    def test_word_rejects_non_word_office_document(self):
+        converter = FileConverter(replace(self.settings, office_converter="word"))
+        with self.assertRaisesRegex(JobError, "仅支持 DOC 和 DOCX"):
+            converter._office_converter_for(Path("report.xlsx"))
+
+
+class WindowsPrintTests(unittest.TestCase):
+    def test_expands_page_ranges_to_zero_based_page_numbers(self):
+        self.assertEqual(PrintBackend._windows_page_numbers("1-2,4", 4), [0, 1, 3])
+
+    def test_decodes_windows_spooler_job_statuses(self):
+        self.assertEqual(PrintBackend._windows_job_issue(0x0040), "打印机缺纸")
+        self.assertEqual(PrintBackend._windows_job_issue(0x0400), "打印机需要人工处理")
+
+    def test_keeps_none_when_windows_driver_does_not_return_a_job_id(self):
+        backend = PrintBackend(replace(get_settings(), mode="windows"))
+        self.assertIsNone(backend._windows_submitted_job_id(None, None, set(), None))
 
 
 if __name__ == "__main__":

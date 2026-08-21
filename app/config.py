@@ -39,6 +39,10 @@ class Settings:
     cups_wait_seconds: int
     retention_hours: int
     admin_token: str
+    office_converter: str = "auto"
+    windows_print_dpi: int = 300
+    windows_wait_seconds: int = 900
+    windows_stall_seconds: int = 60
 
 
 def get_settings() -> Settings:
@@ -47,6 +51,9 @@ def get_settings() -> Settings:
     storage_dir = Path(os.getenv("TCP_PRINTER_STORAGE_DIR", PROJECT_ROOT / "storage"))
     data_dir.mkdir(parents=True, exist_ok=True)
     storage_dir.mkdir(parents=True, exist_ok=True)
+    office_converter = os.getenv("TCP_PRINTER_OFFICE_CONVERTER", "auto").strip().lower()
+    if office_converter not in {"auto", "word", "libreoffice"}:
+        raise ValueError("TCP_PRINTER_OFFICE_CONVERTER must be auto, word, or libreoffice")
     return Settings(
         mode=os.getenv("TCP_PRINTER_MODE", "dry-run").strip().lower(),
         queue_name=os.getenv("TCP_PRINTER_QUEUE", "CP1025").strip(),
@@ -62,4 +69,8 @@ def get_settings() -> Settings:
         cups_wait_seconds=int(os.getenv("TCP_PRINTER_CUPS_WAIT_SECONDS", "900")),
         retention_hours=max(1, int(os.getenv("TCP_PRINTER_RETENTION_HOURS", "24"))),
         admin_token=os.getenv("TCP_PRINTER_ADMIN_TOKEN", "").strip(),
+        office_converter=office_converter,
+        windows_print_dpi=max(72, min(600, int(os.getenv("TCP_PRINTER_WINDOWS_PRINT_DPI", "300")))),
+        windows_wait_seconds=max(30, int(os.getenv("TCP_PRINTER_WINDOWS_WAIT_SECONDS", "900"))),
+        windows_stall_seconds=max(15, int(os.getenv("TCP_PRINTER_WINDOWS_STALL_SECONDS", "60"))),
     )

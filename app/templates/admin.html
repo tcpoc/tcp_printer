@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>打印服务管理</title>
   <link rel="stylesheet" href="/static/styles.css?v=6">
-  <link rel="stylesheet" href="/static/admin.css?v=1">
+  <link rel="stylesheet" href="/static/admin.css?v=2">
 </head>
 <body>
   <header class="app-header">
@@ -28,18 +28,33 @@
         <div><h1>运行状态</h1><p class="muted" id="last-updated"></p></div>
         <div class="admin-toolbar-actions">
           <button class="secondary-button" id="refresh-status" type="button">刷新</button>
+          <button class="secondary-button" id="pause-queue" type="button">暂停新任务</button>
+          <button class="secondary-button" id="resume-queue" type="button">恢复新任务</button>
           <button class="danger-button" id="run-cleanup" type="button">立即清理</button>
         </div>
       </div>
       <div class="admin-metrics" id="metrics"></div>
+      <p class="admin-notice" id="printer-detail"></p>
+      <section class="admin-section" id="printer-queue-section">
+        <h2>Windows 打印队列</h2>
+        <div class="admin-table-wrap">
+          <table>
+            <thead><tr><th>Job ID</th><th>文档</th><th>用户</th><th>状态</th><th>进度</th><th>操作</th></tr></thead>
+            <tbody id="printer-job-table"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="admin-section">
+        <h2>网页任务</h2>
       <div class="admin-table-wrap">
         <table>
-          <thead><tr><th>任务</th><th>文件</th><th>状态</th><th>提交时间</th><th>操作</th></tr></thead>
+          <thead><tr><th>任务</th><th>文件</th><th>状态</th><th>设备 Job ID</th><th>提交时间</th><th>操作</th></tr></thead>
           <tbody id="job-table"></tbody>
         </table>
       </div>
+      </section>
     </section>
   </main>
-  <script src="/static/admin.js?v=2"></script>
+  <script src="/static/admin.js?v=3"></script>
 </body>
 </html>
