@@ -603,7 +603,6 @@ class PrintBackend:
         try:
             import fitz
             import win32con
-            import win32gui
             import win32print
             import win32ui
             from PIL import ImageWin
@@ -625,8 +624,10 @@ class PrintBackend:
             devmode.Fields |= win32con.DM_COLOR | win32con.DM_COPIES
             devmode.Color = win32con.DMCOLOR_COLOR if job["color_mode"] == "color" else win32con.DMCOLOR_MONOCHROME
             devmode.Copies = 1
-            device_context = win32gui.CreateDC("WINSPOOL", self.settings.queue_name, devmode)
-            dc = win32ui.CreateDCFromHandle(device_context)
+            # Use pywin32's printer-specific DC factory. The win32gui.CreateDC
+            # wrapper cannot safely receive a DEVMODE object from older HP drivers.
+            dc = win32ui.CreateDC()
+            dc.CreatePrinterDC(self.settings.queue_name)
             document = fitz.open(str(pdf_path))
             page_numbers = self._windows_page_numbers(job["page_range"], len(document))
             queued_job_ids = self._windows_queue_job_ids(win32print, printer)
@@ -636,8 +637,10 @@ class PrintBackend:
                 for page_number in page_numbers:
                     page = document.load_page(page_number)
                     scale = getattr(self.settings, "windows_print_dpi", 300) / 72.0
-                    pixmap = page.get_pixmap(matrix=fitz.Matrix(scale, scale), colorspace=fitz.csRGB, alpha=False)
-                    image = Image.frombytes("RGB", (pixmap.width, pixmap.height), pixmap.samples)
+                    colorspace = fitz.csRGB if job["color_mode"] == "color" else fitz.csGRAY
+                    image_mode = "RGB" if job["color_mode"] == "color" else "L"
+                    pixmap = page.get_pixmap(matrix=fitz.Matrix(scale, scale), colorspace=colorspace, alpha=False)
+                    image = Image.frombytes(image_mode, (pixmap.width, pixmap.height), pixmap.samples)
                     width = dc.GetDeviceCaps(win32con.HORZRES)
                     height = dc.GetDeviceCaps(win32con.VERTRES)
                     ratio = min(width / image.width, height / image.height)
@@ -650,7 +653,10 @@ class PrintBackend:
                     dc.EndPage()
             dc.EndDoc()
             started = False
-            return self._windows_submitted_job_id(win32print, printer, queued_job_ids, job_id)
+            submitted_job_id = self._windows_submitted_job_id(win32print, printer, queued_job_ids, job_id)
+            if not submitted_job_id:
+                raise JobError("Windows driver did not create a trackable print job; check the print queue and Print Spooler.")
+            return submitted_job_id
         except JobError:
             raise
         except Exception as error:
