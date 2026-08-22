@@ -127,7 +127,11 @@ document.getElementById("refresh-status").addEventListener("click", refresh);
 document.getElementById("pause-queue").addEventListener("click", () => setQueuePaused(true));
 document.getElementById("resume-queue").addEventListener("click", () => setQueuePaused(false));
 document.getElementById("run-cleanup").addEventListener("click", async () => {
-  try { await request("/api/admin/cleanup", { method: "POST" }); await refresh(); }
+  try {
+    const result = await request("/api/admin/cleanup", { method: "POST" });
+    authError.textContent = result.message || `已清理 ${result.removed_jobs || 0} 个已结束任务`;
+    await refresh();
+  }
   catch (error) { authError.textContent = error.message; }
 });
 tokenInput.addEventListener("keydown", (event) => { if (event.key === "Enter") enter(); });

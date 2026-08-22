@@ -241,15 +241,21 @@ class JobStore:
                 ("打印服务曾重启，无法确认该任务是否已出纸，请检查打印机后重新提交。", now_iso()),
             )
 
-    def purge_expired(self, cutoff: datetime, storage_root: Path) -> int:
-        """Remove old non-active jobs and their files without touching active work."""
+    def purge_expired(self, cutoff: datetime, storage_root: Path, all_finished: bool = False) -> int:
+        """Remove old jobs, or all terminal jobs for an administrator cleanup."""
         cutoff_iso = cutoff.astimezone(timezone.utc).isoformat()
         with self._transaction() as connection:
-            rows = connection.execute(
-                """SELECT id, input_path, pdf_path FROM jobs
-                   WHERE updated_at < ? AND state NOT IN ('pending', 'printing')""",
-                (cutoff_iso,),
-            ).fetchall()
+            if all_finished:
+                rows = connection.execute(
+                    """SELECT id, input_path, pdf_path FROM jobs
+                       WHERE state IN ('completed', 'cancelled', 'stopped', 'failed')"""
+                ).fetchall()
+            else:
+                rows = connection.execute(
+                    """SELECT id, input_path, pdf_path FROM jobs
+                       WHERE updated_at < ? AND state NOT IN ('pending', 'printing')""",
+                    (cutoff_iso,),
+                ).fetchall()
 
         root = storage_root.resolve()
         removed_ids = []

@@ -87,6 +87,30 @@ class QueueTests(unittest.TestCase):
             self.assertTrue(active_file.exists())
             self.assertFalse(orphan_file.exists())
 
+    def test_immediate_cleanup_removes_all_finished_jobs_but_keeps_active_jobs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            store = JobStore(root / "printer.db")
+            finished_file = root / "uploads" / "finished.pdf"
+            finished_file.parent.mkdir()
+            finished_file.write_bytes(b"finished")
+            finished = store.create_draft("session", "finished.pdf", finished_file)
+            store.update(finished["id"], state="completed", message="done")
+
+            active_file = root / "uploads" / "active.pdf"
+            active_file.write_bytes(b"active")
+            active = store.create_draft("session", "active.pdf", active_file)
+            store.update(active["id"], state="pending", message="queued")
+
+            removed = store.purge_expired(
+                datetime.now(timezone.utc), root, all_finished=True
+            )
+            self.assertEqual(removed, 1)
+            self.assertIsNone(store.get(finished["id"]))
+            self.assertIsNotNone(store.get(active["id"]))
+            self.assertFalse(finished_file.exists())
+            self.assertTrue(active_file.exists())
+
 
 class ConverterSelectionTests(unittest.TestCase):
     def setUp(self):

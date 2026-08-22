@@ -161,9 +161,10 @@ async def admin_resume_queue(request: Request):
 @app.post("/api/admin/cleanup")
 async def admin_cleanup(request: Request):
     require_admin(request)
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=settings.retention_hours)
-    removed = store.purge_expired(cutoff, settings.storage_dir)
-    return {"removed_jobs": removed}
+    removed = store.purge_expired(
+        datetime.now(timezone.utc), settings.storage_dir, all_finished=True
+    )
+    return {"removed_jobs": removed, "message": f"已清理 {removed} 个已结束任务"}
 
 
 @app.post("/api/admin/jobs/{job_id}/cancel")
